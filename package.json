@@ -1,0 +1,20 @@
+{
+  "name": "next-guard",
+  "version": "0.1.0",
+  "description": "Handle guards and redirection with ease in your next.js app",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "next-js",
+    "next",
+    "guard",
+    "next-guard"
+  ],
+  "author": "Arnau Gómez",
+  "license": "MIT",
+  "dependencies": {
+    "next": "^11.1.2"
+  }
+}
