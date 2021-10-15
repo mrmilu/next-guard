@@ -27,7 +27,7 @@ setGuards([
 
 `routes` is an optional param. If not supplied, the redirect rule will be executed always.
 
-If a redirect rule is effective (and that means that the route must match and the redirect function must not return `null`), then the routes below will not run. If you want to execute many rules simultaneously, you can do so by calling setGuards several times. However, this might lead to unpredictable behaviour.
+If a redirect rule is effective (and that means that the route matches and the redirect function does not return `null`), then the routes below will not run. If you want to execute many rules simultaneously, you can do so by calling setGuards several times. However, this might lead to unpredictable behaviour.
 
 ```javascript
 import setGuards from "next-guard";
