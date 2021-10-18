@@ -21,10 +21,7 @@ function isValidRoute(route: string, matcher: Guard["routes"]): boolean {
   if (isArray && matcher.some((r) => r.test(route))) {
     return true;
   }
-  if (!isArray && matcher.test(route)) {
-    return true;
-  }
-  return false;
+  return !isArray && matcher.test(route);
 }
 
 /**
