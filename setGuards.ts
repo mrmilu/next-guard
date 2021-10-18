@@ -1,9 +1,15 @@
 import RouterSingleton from "next/router";
 
-/** A function that takes the current route and spits out the route
+/**
+ * A function that takes the next and previous route and spits out the route
  * it should redirect to (or null if the redirection should not occur).
+ * @param nextRoute The route the user is going to visit
+ * @param currentRoute The route the user is currently visiting
  */
-export type GuardFunction = (route?: string) => string;
+export type GuardFunction = (
+  nextRoute?: string,
+  currentRoute?: string
+) => string;
 
 export interface Guard {
   routes: RegExp | Array<RegExp>;
@@ -26,10 +32,10 @@ function isValidRoute(route: string, matcher: Guard["routes"]): boolean {
  * @example setGuards([{routes: /profile/, redirect: () => isMobile ? '/desktop-required' : null}])
  */
 export default function setGuards(guards: Array<Guard>): void {
-  const handler = () => {
-    const { route } = RouterSingleton;
+  const handler = (nextRoute: string) => {
+    const { route: currentRoute } = RouterSingleton;
     for (const guard of guards) {
-      if (!isValidRoute(route, guard.routes)) {
+      if (!isValidRoute(nextRoute, guard.routes)) {
         continue;
       }
 
@@ -37,7 +43,7 @@ export default function setGuards(guards: Array<Guard>): void {
       if (typeof guard.redirect === "string") {
         redirectRoute = guard.redirect;
       } else {
-        redirectRoute = guard.redirect(route);
+        redirectRoute = guard.redirect(nextRoute, currentRoute);
       }
 
       if (redirectRoute !== null) {
@@ -47,4 +53,5 @@ export default function setGuards(guards: Array<Guard>): void {
     }
   };
   RouterSingleton.events.on("routeChangeStart", handler);
+  handler(RouterSingleton.route);
 }
