@@ -1,5 +1,11 @@
 import RouterSingleton from "next/router";
 
+/**
+ * Whether or not the route guard should redirect.
+ * `null` -> Do not redirect.
+ * `false` -> Do not redirect, but stop route change.
+ * `string` -> The route it should redirect to.
+ */
 export type Redirect = string | false;
 /**
  * A function that takes the next and previous route and spits out the route
@@ -61,7 +67,13 @@ export default function setGuards(guards: Array<Guard>): void {
       }
     }
   };
-  RouterSingleton.events.on("routeChangeStart", handler);
+
+  RouterSingleton.events.on("beforeHistoryChange", handler);
   RouterSingleton.events.on("routeChangeError", handleError);
-  handler(RouterSingleton.route);
+
+  try {
+    handler(RouterSingleton.route);
+  } catch {
+    return;
+  }
 }
