@@ -2,25 +2,25 @@ import RouterSingleton from "next/router";
 
 /**
  * Whether or not the route guard should redirect.
- * `null` -> Do not redirect.
- * `false` -> Do not redirect, but stop route change.
+ * `true` -> Block route change
  * `string` -> The route it should redirect to.
+ * `false` or `void` -> do nothing
  */
-export type Redirect = string | false;
+export type Redirect = string | boolean | void;
 /**
  * A function that takes the next and previous route and spits out the route
  * it should redirect to, false if the route should be canceled, (or null if the redirection should not occur).
  * @param nextRoute The route the user is going to visit
  * @param currentRoute The route the user is currently visiting
  */
-export type GuardFunction = (
+export type GuardMiddleware = (
   nextRoute?: string,
   currentRoute?: string
 ) => Redirect;
 
 export interface Guard {
   routes: RegExp | Array<RegExp>;
-  redirect: Redirect | GuardFunction;
+  middleware: GuardMiddleware;
 }
 
 function isValidRoute(route: string, matcher: Guard["routes"]): boolean {
@@ -31,8 +31,8 @@ function isValidRoute(route: string, matcher: Guard["routes"]): boolean {
   return !isArray && matcher.test(route);
 }
 
-function handleError({ r }: { r: Redirect }) {
-  if (!r) {
+function handleError({ r }: { r: boolean | string }) {
+  if (typeof r === 'boolean') {
     return;
   }
   void RouterSingleton.router.push(r);
@@ -50,17 +50,9 @@ export default function setGuards(guards: Array<Guard>): void {
         continue;
       }
 
-      let r: Redirect = null;
-      if (
-        typeof guard.redirect === "string" ||
-        typeof guard.redirect === "boolean"
-      ) {
-        r = guard.redirect;
-      } else {
-        r = guard.redirect(nextRoute, currentRoute);
-      }
+      const r = guard.middleware(nextRoute, currentRoute);
 
-      if (r !== null) {
+      if (r) {
         const message = "Route cancelled";
         RouterSingleton.events.emit("routeChangeError", { message, r });
         throw message;

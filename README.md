@@ -13,40 +13,38 @@ import setGuards from 'next-guard'
 // Place this function in the componentDidMount() method of the component in _app.js
 setGuards([
   {
-    routes: /profile/,
-    redirect: () => (isMobile ? "/desktop-required" : null),
-  },
-  {
-    routes: [/profile/, /followers/],
-    redirect: () => (isNotLoggedIn ? "/login" : null),
-  },
-  {
     routes: [/rewards/, /zyzz/]
-    redirect: '/work-in-progress'
-  }
-]);
-```
-
-If a `Guard` is effective (and that means that the route matches and the redirect function does not return `null`), then the `Guard`s below will not run.
-
-### Danger zone ()
-
-If you want to execute many `Guard`s simultaneously, you can do so by calling `setGuards` several times. However, this might lead to unpredictable behaviour.
-
-```javascript
-import setGuards from "next-guard";
-
-// Place this function in the componentDidMount() method of the component in _app.js
-setGuards([
-  {
-    routes: /profile/,
-    redirect: () => (isMobile ? "/desktop-required" : null),
+    middleware: () => '/work-in-progress'
   },
-]);
-setGuards([
+  {
+    routes: /mobile/,
+    middleware: () => isMobile && "/desktop-required"
+  },
   {
     routes: [/profile/, /followers/],
-    redirect: () => (isNotLoggedIn ? "/login" : null),
+    middleware: () => isNotLoggedIn // block the route change if user is not logged in
+  },
+  {
+    routes: [/.+/],
+    middleware: (nextRoute, prevRoute) => {
+      console.log({nextRoute, prevRoute})
+    }
   },
 ]);
 ```
+
+Each `Guard` is an object that has 2 parameters:
+
+- `routes`: either a regular expression or an array of regular expressions. If any of the `routes` matches the regular expression, the `middleware` will be called
+- `middleware`: a function that takes two arguments
+
+  - `nextRoute`: The route after it changes
+  - `prevRoute`: The route before it was changed
+
+  The `middleware` function can return:
+
+  - A `string` of the route it should redirect to
+  - `true` if you want to block the route change but not redirect it.
+  - `false` or a falsy value if you want to do nothing.
+
+If a `Guard` is effective (and that means that the route matches and the redirect function returns `true` or a `string`), then the `Guard`s below will not run.
