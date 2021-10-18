@@ -13,7 +13,7 @@ import setGuards from 'next-guard'
 // Place this function in the componentDidMount() method of the component in _app.js
 setGuards([
   {
-    routes: [/rewards/, /zyzz/]
+    routes: [/rewards/, /zyzz/],
     middleware: () => '/work-in-progress'
   },
   {
