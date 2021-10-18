@@ -6,15 +6,12 @@ import RouterSingleton from "next/router";
 export type GuardFunction = (route?: string) => string;
 
 export interface Guard {
-  routes?: RegExp | Array<RegExp>;
+  routes: RegExp | Array<RegExp>;
   redirect: string | GuardFunction;
 }
 
 function isValidRoute(route: string, matcher: Guard["routes"]): boolean {
   const isArray = Array.isArray(matcher);
-  if (matcher === undefined) {
-    return true;
-  }
   if (isArray && matcher.some((r) => r.test(route))) {
     return true;
   }

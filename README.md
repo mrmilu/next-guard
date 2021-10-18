@@ -27,8 +27,6 @@ setGuards([
 ]);
 ```
 
-`routes` is an optional param. If not supplied, the `redirect` function will be executed always.
-
 If a `Guard` is effective (and that means that the route matches and the redirect function does not return `null`), then the `Guard`s below will not run. If you want to execute many `Guard`s simultaneously, you can do so by calling `setGuards` several times. However, this might lead to unpredictable behaviour.
 
 ```javascript
