@@ -27,7 +27,11 @@ setGuards([
 ]);
 ```
 
-If a `Guard` is effective (and that means that the route matches and the redirect function does not return `null`), then the `Guard`s below will not run. If you want to execute many `Guard`s simultaneously, you can do so by calling `setGuards` several times. However, this might lead to unpredictable behaviour.
+If a `Guard` is effective (and that means that the route matches and the redirect function does not return `null`), then the `Guard`s below will not run.
+
+### Danger zone ()
+
+If you want to execute many `Guard`s simultaneously, you can do so by calling `setGuards` several times. However, this might lead to unpredictable behaviour.
 
 ```javascript
 import setGuards from "next-guard";

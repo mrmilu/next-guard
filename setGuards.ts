@@ -1,19 +1,20 @@
 import RouterSingleton from "next/router";
 
+export type Redirect = string | false;
 /**
  * A function that takes the next and previous route and spits out the route
- * it should redirect to (or null if the redirection should not occur).
+ * it should redirect to, false if the route should be canceled, (or null if the redirection should not occur).
  * @param nextRoute The route the user is going to visit
  * @param currentRoute The route the user is currently visiting
  */
 export type GuardFunction = (
   nextRoute?: string,
   currentRoute?: string
-) => string;
+) => Redirect;
 
 export interface Guard {
   routes: RegExp | Array<RegExp>;
-  redirect: string | GuardFunction;
+  redirect: Redirect | GuardFunction;
 }
 
 function isValidRoute(route: string, matcher: Guard["routes"]): boolean {
@@ -22,6 +23,13 @@ function isValidRoute(route: string, matcher: Guard["routes"]): boolean {
     return true;
   }
   return !isArray && matcher.test(route);
+}
+
+function handleError({ r }: { r: Redirect }) {
+  if (!r) {
+    return;
+  }
+  void RouterSingleton.router.push(r);
 }
 
 /**
@@ -36,19 +44,24 @@ export default function setGuards(guards: Array<Guard>): void {
         continue;
       }
 
-      let redirectRoute: string = null;
-      if (typeof guard.redirect === "string") {
-        redirectRoute = guard.redirect;
+      let r: Redirect = null;
+      if (
+        typeof guard.redirect === "string" ||
+        typeof guard.redirect === "boolean"
+      ) {
+        r = guard.redirect;
       } else {
-        redirectRoute = guard.redirect(nextRoute, currentRoute);
+        r = guard.redirect(nextRoute, currentRoute);
       }
 
-      if (redirectRoute !== null) {
-        void RouterSingleton.push(redirectRoute);
-        break;
+      if (r !== null) {
+        const message = "Route cancelled";
+        RouterSingleton.events.emit("routeChangeError", { message, r });
+        throw message;
       }
     }
   };
   RouterSingleton.events.on("routeChangeStart", handler);
+  RouterSingleton.events.on("routeChangeError", handleError);
   handler(RouterSingleton.route);
 }
