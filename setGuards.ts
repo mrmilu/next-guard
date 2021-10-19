@@ -1,5 +1,9 @@
 import RouterSingleton from "next/router";
 
+export interface GuardsConfig {
+  debug: boolean;
+}
+
 /**
  * Whether or not the route guard should redirect.
  * `true` -> Block route change
@@ -21,6 +25,10 @@ export type GuardMiddleware = (
 export interface Guard {
   routes: RegExp | Array<RegExp>;
   middleware: GuardMiddleware;
+  /** Whether the guard should run as soon as `setGuards` runs. Defaults to `true` */
+  runImmediately?: boolean;
+  /** Used to identify guard when debugging */
+  id?: string;
 }
 
 function isValidRoute(route: string, matcher: Guard["routes"]): boolean {
@@ -32,7 +40,7 @@ function isValidRoute(route: string, matcher: Guard["routes"]): boolean {
 }
 
 function handleError({ r }: { r: boolean | string }) {
-  if (typeof r === 'boolean') {
+  if (typeof r === "boolean") {
     return;
   }
   void RouterSingleton.router.push(r);
@@ -42,11 +50,20 @@ function handleError({ r }: { r: boolean | string }) {
  * Receives a series of guard rules which will be applied every time a route changes.
  * @example setGuards([{routes: /profile/, redirect: () => isMobile ? '/desktop-required' : null}])
  */
-export default function setGuards(guards: Array<Guard>): void {
-  const handler = (nextRoute: string) => {
+// eslint-disable-next-line sonarjs/cognitive-complexity
+export default function setGuards(
+  guards: Array<Guard>,
+  config?: GuardsConfig
+): void {
+  const isDebug = config?.debug ?? false;
+
+  const handler = (nextRoute: string, { firstRun } = { firstRun: false }) => {
     const { route: currentRoute } = RouterSingleton;
     for (const guard of guards) {
-      if (!isValidRoute(nextRoute, guard.routes)) {
+      if (
+        !isValidRoute(nextRoute, guard.routes) ||
+        (firstRun && !(guard.runImmediately ?? true))
+      ) {
         continue;
       }
 
@@ -54,9 +71,29 @@ export default function setGuards(guards: Array<Guard>): void {
 
       if (r) {
         const message = "Route cancelled";
+        if (isDebug) {
+          // eslint-disable-next-line no-console
+          console.log({
+            nextRoute,
+            prevRoute: currentRoute,
+            message:
+              typeof r === "string"
+                ? `Route change has been redirected to ${r}.`
+                : "Route change has been blocked.",
+            guardId: guard.id,
+          });
+        }
         RouterSingleton.events.emit("routeChangeError", { message, r });
         throw message;
       }
+    }
+    if (isDebug) {
+      // eslint-disable-next-line no-console
+      console.log({
+        nextRoute,
+        prevRoute: currentRoute,
+        message: "Route change successful.",
+      });
     }
   };
 
@@ -64,7 +101,7 @@ export default function setGuards(guards: Array<Guard>): void {
   RouterSingleton.events.on("routeChangeError", handleError);
 
   try {
-    handler(RouterSingleton.route);
+    handler(RouterSingleton.route, { firstRun: true });
   } catch {
     return;
   }
